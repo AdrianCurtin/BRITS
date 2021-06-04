@@ -17,6 +17,7 @@ for filename in os.listdir('./raw'):
 
 out = pd.read_csv('./raw/Outcomes-a.txt').set_index('RecordID')['In-hospital_death']
 
+
 # we select 35 attributes which contains enough non-values
 attributes = ['DiasABP', 'HR', 'Na', 'Lactate', 'NIDiasABP', 'PaO2', 'WBC', 'pH', 'Albumin', 'ALT', 'Glucose', 'SaO2',
               'Temp', 'AST', 'Bilirubin', 'HCO3', 'BUN', 'RespRate', 'Mg', 'HCT', 'SysABP', 'FiO2', 'K', 'GCS',
@@ -54,7 +55,7 @@ def parse_data(x):
     values = []
 
     for attr in attributes:
-        if x.has_key(attr):
+        if attr in x:
             values.append(x[attr])
         else:
             values.append(np.nan)
@@ -130,16 +131,18 @@ def parse_id(id_):
 
     label = out.loc[int(id_)]
 
-    rec = {'label': label}
+    rec = {'label': int(label)}
 
     # prepare the model for both directions
     rec['forward'] = parse_rec(values, masks, evals, eval_masks, dir_='forward')
     rec['backward'] = parse_rec(values[::-1], masks[::-1], evals[::-1], eval_masks[::-1], dir_='backward')
-
+    
+ 
     rec = json.dumps(rec)
-
+    
     fs.write(rec + '\n')
 
+#print(patient_ids)
 
 for id_ in patient_ids:
     print('Processing patient {}'.format(id_))
