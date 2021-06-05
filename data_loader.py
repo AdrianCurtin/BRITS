@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
+from itertools import tee 
+
 class MySet(Dataset):
     def __init__(self):
         super(MySet, self).__init__()
@@ -39,26 +41,29 @@ class MySet(Dataset):
         return rec
 
 def collate_fn(recs):
-    forward = map(lambda x: x['forward'], recs)
-    backward = map(lambda x: x['backward'], recs)
+    
+    itr=tee(recs,4)
+    
+    forward = map(lambda x: x['forward'], itr[0])
+    backward = map(lambda x: x['backward'], itr[1])
 
     def to_tensor_dict(recs):
-        values = torch.FloatTensor(list(map(lambda r: r['values'], recs)))
-        masks = torch.IntTensor(list(map(lambda r: r['masks'], recs)))
-        print(masks)
-        deltas = torch.FloatTensor(list(map(lambda r: r['deltas'], recs)))
+        itr=tee(recs,6)
+        values = torch.FloatTensor(list(map(lambda r: r['values'], itr[0])))
+        masks = torch.FloatTensor(list(map(lambda r: r['masks'], itr[1])))
+        deltas = torch.FloatTensor(list(map(lambda r: r['deltas'], itr[2])))
 
-        evals = torch.FloatTensor(list(map(lambda r: r['evals'], recs)))
-        eval_masks = torch.IntTensor(list(map(lambda r: r['eval_masks'], recs)))
-        forwards = torch.FloatTensor(list(map(lambda r: r['forwards'], recs)))
+        evals = torch.FloatTensor(list(map(lambda r: r['evals'], itr[3])))
+        eval_masks = torch.FloatTensor(list(map(lambda r: r['eval_masks'], itr[4])))
+        forwards = torch.FloatTensor(list(map(lambda r: r['forwards'], itr[5])))
 
 
         return {'values': values, 'forwards': forwards, 'masks': masks, 'deltas': deltas, 'evals': evals, 'eval_masks': eval_masks}
 
     ret_dict = {'forward': to_tensor_dict(forward), 'backward': to_tensor_dict(backward)}
 
-    ret_dict['labels'] = torch.IntTensor(list(map(lambda x: x['label'], recs)))
-    ret_dict['is_train'] = torch.IntTensor(list(map(lambda x: x['is_train'], recs)))
+    ret_dict['labels'] = torch.IntTensor(list(map(lambda x: x['label'], itr[2])))
+    ret_dict['is_train'] = torch.IntTensor(list(map(lambda x: x['is_train'], itr[3])))
 
     return ret_dict
 

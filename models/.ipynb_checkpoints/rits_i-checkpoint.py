@@ -79,7 +79,7 @@ class Model(nn.Module):
         values = data[direct]['values']
         masks = data[direct]['masks']
         
-        print(masks)
+    
         
         deltas = data[direct]['deltas']
 
@@ -99,6 +99,8 @@ class Model(nn.Module):
         y_loss = 0.0
 
         imputations = []
+        
+        
 
         for t in range(SEQ_LEN):
             x = values[:, t, :]
